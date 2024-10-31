@@ -12,19 +12,10 @@ function generateCirclePoints(radius, numberOfPoints) {
     return points;
 }
 
-// Функция для вывода строк в формате text-shadow
-function printTextShadow(points, shadowColor, offsetX, offsetY) {
-    let shadowString = `text-shadow: `;
-
-    points.forEach((point, index) => {
-        shadowString += `${(point.x + offsetX).toFixed(2)}px ${(point.y + offsetY).toFixed(2)}px #${shadowColor}`;
-        // Добавляем запятую, если это не последняя точка
-        if (index < points.length - 1) {
-            shadowString += `, `;
-        }
-    });
-
-    console.log(shadowString + ";"); // Выводим строку
+// Функция для формирования строки с текстом для обводки и теней
+function generateTextShadowString(outlinePoints, shadowPoints) {
+    const allPoints = [...outlinePoints, ...shadowPoints]; // Сначала обводка, потом тени
+    return `text-shadow: ` + allPoints.map(point => `${point.x.toFixed(2)}px ${point.y.toFixed(2)}px #${point.color}`).join(', ') + ";";
 }
 
 // Получаем аргументы командной строки
@@ -34,7 +25,7 @@ const numberOfShadows = parseInt(args[1], 10) || 8; // Количество те
 const outlineThickness = parseFloat(args[2]) || 1; // Толщина обводки, по умолчанию 1
 const offsetX = parseFloat(args[3]) || 0; // Смещение по оси X, по умолчанию 0
 const offsetY = parseFloat(args[4]) || 0; // Смещение по оси Y, по умолчанию 0
-const shadowColor = args[5] || 'FFFFFF'; // Цвет тени, по умолчанию белый
+const shadowColor = args[5] || null; // Цвет тени, по умолчанию null
 
 // Проверяем корректность количества теней и толщины обводки
 if (isNaN(numberOfShadows) || numberOfShadows <= 0) {
@@ -48,7 +39,22 @@ if (isNaN(outlineThickness) || outlineThickness <= 0) {
 }
 
 // Генерируем точки для обводки
-const points = generateCirclePoints(outlineThickness, numberOfShadows);
+const outlinePoints = generateCirclePoints(outlineThickness, numberOfShadows).map(point => ({
+    x: point.x,
+    y: point.y,
+    color: outlineColor // Добавляем цвет обводки
+}));
 
-// Выводим текстовые тени
-printTextShadow(points, shadowColor, offsetX, offsetY);
+// Генерируем точки для теней, добавляя смещения только если указан цвет
+let shadowPoints = [];
+if (shadowColor) {
+    shadowPoints = generateCirclePoints(outlineThickness, numberOfShadows).map(point => ({
+        x: point.x + offsetX,
+        y: point.y + offsetY,
+        color: shadowColor // Добавляем цвет тени
+    }));
+}
+
+// Формируем строку с текстом
+const textShadowString = generateTextShadowString(outlinePoints, shadowPoints);
+console.log(textShadowString); // Выводим строку
